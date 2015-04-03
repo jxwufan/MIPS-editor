@@ -92,6 +92,7 @@ QString Assembler::ass2bin(QString input)
                 QStringList list= str.split(':');
                 labelTable[list.at(0).trimmed()] = address;
                 str = list.at(1).trimmed();
+                if (str.isEmpty()) continue;
             }
             if (mode == Instruction) {
                 for (int i = 0; i < 4; i++)
@@ -99,7 +100,7 @@ QString Assembler::ass2bin(QString input)
                         //QMessageBox conflict
                         return "";
                     }
-                ram[address] = str;
+                ram[address] = str.trimmed();
                 address += 4;
             } else {
                 if (str.startsWith("DB")) {
@@ -139,6 +140,7 @@ QString Assembler::ass2bin(QString input)
     {
         if (ram.contains(address)) {
             QString str = ram[address];
+            qDebug() << "Line\t" << address << "\t" << ram[address];
             if (str.contains('\'')) {
                 str.remove(0, 1);
                 str.chop(1);
