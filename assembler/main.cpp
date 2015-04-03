@@ -15,10 +15,17 @@ int main(int argc, char *argv[])
 
     QString input = text.readAll();
 
-    //qDebug() <<
     Assembler ass;
 
-    qDebug() << ass.ass2bin(input);
+    QString output = ass.ass2bin(input);
+
+    QFile file2("output.txt");
+    file2.open(QFile::WriteOnly | QFile::Text);
+
+    QTextStream outputtext(&file2);
+
+    outputtext << output;
+    file2.close();
 
     return a.exec();
 }

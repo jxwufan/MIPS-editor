@@ -145,8 +145,19 @@ QString Assembler::ass2bin(QString input)
                 output += str;
                 if (str.size() == 2) address++;
             }
-            else {
-
+            else if (str.startsWith("0X")){
+                str.remove(0, 2);
+                if (str.size() == 4) address++;
+                while (!str.isEmpty()) {
+                    output += QChar(str.mid(str.size() - 2, 2).toInt(NULL, 16));
+                    str.chop(2);
+                }
+            } else {
+                output += QChar(0);
+                output += QChar(0);
+                output += QChar(0);
+                output += QChar(0);
+                address += 3;
             }
         } else
             output += QChar(0);
