@@ -17,6 +17,8 @@ private:
     QMap<int, QString> ram;
     QMap<QString, int> labelTable;
     QMap<QString, int> registerTable;
+    QMap<QString, int> intFunctCode;
+    QString translate2bin(QString instruction);
 };
 
 #endif // ASSEMBLER_H
