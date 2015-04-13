@@ -41,6 +41,9 @@ void MainWindow::newFile()
 {
     checkEdited();
     ui->plainTextEdit->clear();
+    fileName = "*";
+
+    ui->statusBar->showMessage(fileName);
 }
 
 void MainWindow::openFile()
