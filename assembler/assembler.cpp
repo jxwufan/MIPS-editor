@@ -41,20 +41,70 @@ Assembler::Assembler()
     registerTable["$FP"]    = 30;
     registerTable["$RA"]    = 31;
 
-    intFunctCode["ADD"]  = 32;
-    intFunctCode["ADDU"] = 33;
-    intFunctCode["SUB"]  = 34;
-    intFunctCode["SUBU"] = 35;
-    intFunctCode["MUL"]  = 24;
-    intFunctCode["MULU"] = 25;
-    intFunctCode["DIV"]  = 26;
-    intFunctCode["DIVU"] = 27;
-    intFunctCode["SLT"]  = 42;
-    intFunctCode["SLTU"] = 43;
-    intFunctCode["AND"]  = 36;
-    intFunctCode["OR"]   = 37;
-    intFunctCode["NOR"]  = 39;
-    intFunctCode["XOR"]  = 40;
+    functCode.clear();
+    functCode["SLL"]  = 0;
+    functCode["SRL"]  = 2;
+    functCode["SRA"]  = 3;
+    functCode["SLLV"] = 4;
+    functCode["SRLV"] = 6;
+    functCode["SRAV"] = 7;
+
+    functCode["MUL"]  = 24;
+    functCode["MULU"] = 25;
+    functCode["DIV"]  = 26;
+    functCode["DIVU"] = 27;
+    functCode["ADD"]  = 32;
+    functCode["ADDU"] = 33;
+    functCode["SUB"]  = 34;
+    functCode["SUBU"] = 35;
+    functCode["AND"]  = 36;
+    functCode["OR"]   = 37;
+    functCode["XOR"]  = 38;
+    functCode["NOR"]  = 39;
+    functCode["SLT"]  = 42;
+    functCode["SLTU"] = 43;
+
+    type1.clear();
+    type1["ADD"]	 = 0x20;
+    type1["ADDU"]	 = 0x21;
+    type1["AND"]	 = 0x24;
+    type1["NOR"]	 = 0x27;
+    type1["OR"]		 = 0x25;
+    type1["SUB"]	 = 0x22;
+    type1["SUBU"]	 = 0x23;
+    type1["XOR"]	 = 0x26;
+    type1["SLT"]	 = 0x2a;
+    type1["SLTU"]	 = 0x2b;
+
+    type2.clear();
+    type2["LW"]		= 0x23;
+    type2["LB"]		= 0x20;
+    type2["LBU"]	= 0x24;
+    type2["LH"]		= 0x21;
+    type2["LHU"]	= 0x25;
+    type2["SW"]		= 0x2b;
+    type2["SB"]		= 0x28;
+    type2["SH"]		= 0x29;
+
+    type3.clear();
+    type3["ADDI"]	=	8;
+    type3["ADDIU"]	=	9;
+    type3["ANDI"]	=	0xc;
+    type3["ORI"]	=	0xd;
+    type3["XORI"]	=	0xe;
+    type3["SLTI"]	=	0xa;
+    type3["SLTIU"]	=	0xb;
+
+    type4.clear();
+    type4["SLL"]	=	0;
+    type4["SRL"]	=	2;
+    type4["SRA"]	=	3;
+
+    type5.clear();
+    type5["MULT"]	=	0x18;
+    type5["MULTU"]	=	0x19;
+    type5["DIV"]	=	0x1a;
+    type5["DIVU"]	=	0x1b;
 }
 
 Assembler::~Assembler()
@@ -111,6 +161,7 @@ QString Assembler::ass2bin(QString input)
                 if (str.isEmpty()) continue;
             }
             if (mode == Instruction) {
+                //pesudo instruction
                 for (int i = 0; i < 4; i++)
                     if (ram.contains(address + i)) {
                         //QMessageBox conflict
@@ -190,39 +241,54 @@ QString Assembler::translate2bin(QString instruction)
     operation = instruction.mid(0, instruction.indexOf(" ")).trimmed();
     operands = instruction.remove(0, instruction.indexOf(" ")).replace(" ", "").split(",");
 
-    if (intFunctCode.contains(operation)) {
+    if (type1.contains(operation)) {
         if (operands.size() != 3) {
             //QMessageBox invalid
             return "";
         }
         binstr += "000000";
-
-        for (int i = 0; i < 5 - QString::number(registerTable[operands.at(1)], 2).size(); i++)
-            binstr += "0";
-        binstr += QString::number(registerTable[operands.at(1)], 2);
-
-        for (int i = 0; i < 5 - QString::number(registerTable[operands.at(2)], 2).size(); i++)
-            binstr += "0";
-        binstr += QString::number(registerTable[operands.at(2)], 2);
-
-        for (int i = 0; i < 5 - QString::number(registerTable[operands.at(0)], 2).size(); i++)
-            binstr += "0";
-        binstr += QString::number(registerTable[operands.at(0)], 2);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(2)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += "00000";
-
-        for (int i = 0; i < 6 - QString::number(intFunctCode[operation], 2).size(); i++)
-            binstr += "0";
-        binstr += QString::number(intFunctCode[operation], 2);
+        binstr += fillZeroOrChop(QString::number(type1[operation], 2), 6);
+    } else if (type2.contains(operation)) {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        QStringList offsetWithRegister = operands.at(1).split("(");
+        offsetWithRegister[1].replace(")", "");
+        binstr += fillZeroOrChop(QString::number(type2[operation], 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[offsetWithRegister.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(offsetWithRegister.at(0).toInt(NULL, 10), 2), 16);
     }
 
-    qDebug() << binstr;
-    qDebug() << binstr.size();
+    binstr = "10000101010000000000000000010000";
 
     while (!binstr.isEmpty()) {
         bin += QChar(binstr.mid(0, 8).toInt(NULL, 2));
         binstr.remove(0, 8);
     }
 
+    qDebug() << bin.size();
+
+    if (bin.contains(QChar(194))) qDebug() << "shit";
+
     return bin;
+}
+
+QString Assembler::fillZeroOrChop(QString str, int len)
+{
+    QString out = "";
+    if (str.size() < len) {
+        for (int i = 0; i < len - str.size(); i++)
+            out += "0";
+        out += str;
+    } else {
+        out += str.mid(str.size() - len, len);
+    }
+    return out;
 }
 
