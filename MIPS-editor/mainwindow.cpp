@@ -37,6 +37,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (this->exitEditor()) event->accept();
+        else event->ignore();
+}
+
 void MainWindow::newFile()
 {
     checkEdited();
@@ -88,19 +94,20 @@ void MainWindow::saveAsFile()
     saveFile();
 }
 
-void MainWindow::exitEditor()
+bool MainWindow::exitEditor()
 {
     if (edited) {
         if (QMessageBox::warning(this, "Warning", "You have something didn't saved, do you want save them first?", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
             saveFile();
         else {
             if (QMessageBox::warning(this, "Warning", "Do you really want to exit the program?", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
-                this->close();
+                return true;
         }
     } else {
         if (QMessageBox::warning(this, "Warning", "Do you really want to exit the program?", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
-            this->close();
+            return true;
     }
+    return false;
 }
 
 void MainWindow::textChanged()
