@@ -4,6 +4,7 @@
 #include <QMap>
 
 class QString;
+class QStringList;
 
 class Assembler
 {
@@ -27,6 +28,7 @@ private:
     QString translate2bin(QString instruction, int address);
     QString fillZeroOrChop(QString str, int len);
     QString imm2bin(QString str, int len);
+    QStringList imm2two(QString str);
 };
 
 #endif // ASSEMBLER_H

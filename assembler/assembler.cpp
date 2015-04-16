@@ -176,6 +176,7 @@ QString Assembler::ass2bin(QString input)
     int address = 0;
 
     foreach (QString str, inputCodes) {
+        str = str.trimmed();
         if (str.startsWith("BASEADDRE")) {
             mode = Instruction;
             bool ok;
@@ -186,8 +187,41 @@ QString Assembler::ass2bin(QString input)
             address = str.split(':').at(1).trimmed().toInt(&ok, 16);
         } else if (str.contains("EQU")) {
             str.replace("EQU", " ");
-            QStringList list = str.split(" ");
+            QStringList list = str.split(" ", QString::SkipEmptyParts);
             labelTable[list.at(0).trimmed()] = list.at(1).trimmed().toInt();
+        } else if (str.contains("MOVE")) {
+            str.replace("MOVE", "ADDI");
+            str.append(",0");
+            ram[address] = str.trimmed();
+            address += 4;
+        } else if (str.contains("LA")) {
+            str.replace("LA", "");
+            str = str.trimmed();
+            QStringList operands = str.split(",", QString::SkipEmptyParts);
+            QStringList list = imm2two(QString::number(labelTable[operands.at(1).trimmed()], 10));
+            str = "LUI " + operands.at(0).trimmed() + ", " + list.at(1);
+            ram[address] = str;
+            address += 4;
+            str = "SRL " + operands.at(0) + ", 16";
+            ram[address] = str;
+            address += 4;
+            str = "LUI " + operands.at(0).trimmed() + ", " + list.at(0);
+            ram[address] = str;
+            address += 4;
+        } else if (str.contains("LI")) {
+            str.replace("LI", "");
+            str = str.trimmed();
+            QStringList operands = str.split(",", QString::SkipEmptyParts);
+            QStringList list = imm2two(operands.at(1));
+            str = "LUI " + operands.at(0).trimmed() + ", " + list.at(1);
+            ram[address] = str;
+            address += 4;
+            str = "SRL " + operands.at(0) + ", 16";
+            ram[address] = str;
+            address += 4;
+            str = "LUI " + operands.at(0).trimmed() + ", " + list.at(0);
+            ram[address] = str;
+            address += 4;
         } else {
             if (str.contains(':')) {
                 QStringList list= str.split(':');
@@ -543,5 +577,21 @@ QString Assembler::imm2bin(QString str, int len)
         return fillZeroOrChop(QString::number(str.toInt(NULL, 16), 2), len);
     else
         return fillZeroOrChop(QString::number(str.toInt(NULL, 10), 2), len);
+}
+
+QStringList Assembler::imm2two(QString str)
+{
+    qlonglong imm;
+    if (str.startsWith("0X"))
+        imm = str.toLongLong(NULL, 16);
+    else
+        imm = str.toLongLong(NULL, 10);
+    QStringList list;
+
+    list.clear();
+    list.append(QString::number(imm >> 16, 10));
+    list.append(QString::number(imm - ((imm >> 16) << 16), 10));
+    qDebug() << list << "two lists";
+    return list;
 }
 

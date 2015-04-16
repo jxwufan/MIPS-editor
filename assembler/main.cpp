@@ -27,8 +27,5 @@ int main(int argc, char *argv[])
     outputtext << output;
     file2.close();
 
-//    qDebug() << QString("0x10").toInt(NULL, 16);
-//    qDebug() << "asdf";
-
     return a.exec();
 }
