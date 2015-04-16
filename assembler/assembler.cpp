@@ -41,6 +41,39 @@ Assembler::Assembler()
     registerTable["$FP"]    = 30;
     registerTable["$RA"]    = 31;
 
+    registerTable["$R0"]    =   0;
+    registerTable["$R1"]    =   1;
+    registerTable["$R2"]    =   2;
+    registerTable["$R3"]    =   3;
+    registerTable["$R4"]    =   4;
+    registerTable["$R5"]    =   5;
+    registerTable["$R6"]    =   6;
+    registerTable["$R7"]    =   7;
+    registerTable["$R8"]    =   8;
+    registerTable["$R9"]    =   9;
+    registerTable["$R10"]    =   10;
+    registerTable["$R11"]    =   11;
+    registerTable["$R12"]    =   12;
+    registerTable["$R13"]    =   13;
+    registerTable["$R14"]    =   14;
+    registerTable["$R15"]    =   15;
+    registerTable["$R16"]    =   16;
+    registerTable["$R17"]    =   17;
+    registerTable["$R18"]    =   18;
+    registerTable["$R19"]    =   19;
+    registerTable["$R20"]    =   20;
+    registerTable["$R21"]    =   21;
+    registerTable["$R22"]    =   22;
+    registerTable["$R23"]    =   23;
+    registerTable["$R24"]    =   24;
+    registerTable["$R25"]    =   25;
+    registerTable["$R26"]    =   26;
+    registerTable["$R27"]    =   27;
+    registerTable["$R28"]    =   28;
+    registerTable["$R29"]    =   29;
+    registerTable["$R30"]    =   30;
+    registerTable["$R31"]    =   31;
+
     functCode.clear();
     functCode["SLL"]  = 0;
     functCode["SRL"]  = 2;
@@ -128,6 +161,8 @@ QString Assembler::ass2bin(QString input)
             inputCodes[i].truncate(inputCodes[i].indexOf('#'));
         if (inputCodes[i].indexOf("//") >= 0)
             inputCodes[i].truncate(inputCodes[i].indexOf("//"));
+        if (inputCodes[i].indexOf(";") >= 0)
+            inputCodes[i].truncate(inputCodes[i].indexOf(";") + 1);
     }
     input = inputCodes.join("\n");
     input.replace(";", "\n");
@@ -222,7 +257,7 @@ QString Assembler::ass2bin(QString input)
                     str.remove(0, 2);
                 }
             } else {
-                output += translate2bin(str);
+                output += translate2bin(str, address);
                 address += 3;
             }
         } else
@@ -232,14 +267,21 @@ QString Assembler::ass2bin(QString input)
     return output;
 }
 
-QString Assembler::translate2bin(QString instruction)
+QString Assembler::translate2bin(QString instruction, int address)
 {
     QString bin = "";
     QString binstr = "";
     QString operation;
     QStringList operands;
-    operation = instruction.mid(0, instruction.indexOf(" ")).trimmed();
-    operands = instruction.remove(0, instruction.indexOf(" ")).replace(" ", "").split(",");
+    if (instruction.contains(" ")) {
+        operation = instruction.mid(0, instruction.indexOf(" ")).trimmed();
+        operands = instruction.remove(0, instruction.indexOf(" ")).replace(" ", "").split(",");
+    } else {
+        operation = instruction;
+        operands.clear();
+    }
+    qDebug() << operation;
+    qDebug() << operands;
 
     if (type1.contains(operation)) {
         if (operands.size() != 3) {
@@ -263,18 +305,221 @@ QString Assembler::translate2bin(QString instruction)
         binstr += fillZeroOrChop(QString::number(registerTable[offsetWithRegister.at(1)], 2), 5);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(offsetWithRegister.at(0).toInt(NULL, 10), 2), 16);
+    } else if (type3.contains(operation)) {
+        if (operands.size() != 3) {
+           //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(type3[operation], 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += imm2bin(operands.at(2), 16);
+    } else if (operation == "LUI") {
+        if (operands.size() != 2) {
+           //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(0xf, 2), 6);
+        binstr += fillZeroOrChop(QString::number(0, 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += imm2bin(operands.at(1), 16);
+    } else if (type4.contains(operation)) {
+        if (operands.size() != 3) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(type4[operation], 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += "0000000000";
+        binstr += imm2bin(operands.at(2), 6);
+    } else if (type5.contains(operation)) {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop("0", 10);
+        binstr += fillZeroOrChop(QString::number(type5[operation], 2), 6);
+    } else if (operation == "BNE") {
+        if (operands.size() != 3) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(5, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - address) / 4, 2), 16);
+    } else if (operation == "BEQ") {
+        if (operands.size() != 3) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(4, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - address) / 4, 2), 16);
+    } else if (operation == "BGEZ") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(1, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(1, 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+    } else if (operation == "BGTZ") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(7, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(0, 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+    } else if (operation == "BLTZ") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(1, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(0, 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+    } else if (operation == "BLEZ") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(6, 2), 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(0, 2), 5);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+    } else if (operation == "J") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(2, 2), 6);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] - address) / 4, 2), 26);
+    } else if (operation == "JAL") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(3, 2), 6);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] - address) / 4, 2), 26);
+    } else if (operation == "JALR") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += "000000";
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += "00000";
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += "00000";
+        binstr += fillZeroOrChop(QString::number(9, 2), 6);
+    } else if (operation == "JR") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 6);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop("0", 15);
+        binstr += fillZeroOrChop(QString::number(8, 2), 6);
+    } else if (operation == "MFHI") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop(QString::number(0x10, 2), 6);
+    } else if (operation == "MFLO") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop(QString::number(0x12, 2), 6);
+    } else if (operation == "MTHI") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop(QString::number(0x11, 2), 6);
+    } else if (operation == "MTLO") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop(QString::number(0x13, 2), 6);
+    } else if (operation == "ERET") {
+        if (operands.size() != 0) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += "01000010000000000000000000011000";
+    } else if (operation == "BREAK") {
+        if (operands.size() != 1) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += "000000";
+        binstr += fillZeroOrChop(QString::number(operands.at(0).toInt(NULL, 10), 2), 20);
+        binstr += "001100";
+    } else if (operation == "SYSCALL") {
+        if (operands.size() != 0) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += "00000000000000000000000000001100";
+    } else if (operation == "MFC0") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(0x10, 2), 6);
+        binstr += "00000";
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += "00000000000";
+    } else if (operation == "MTC0") {
+        if (operands.size() != 2) {
+            //QMessageBox invalid
+            return "";
+        }
+        binstr += fillZeroOrChop(QString::number(0x10, 2), 6);
+        binstr += "00100";
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
+        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += "00000000000";
     }
+    qDebug() << binstr;
+    qDebug() << binstr.size();
 
-    binstr = "10000101010000000000000000010000";
+    QString hexstr = "";
 
     while (!binstr.isEmpty()) {
         bin += QChar(binstr.mid(0, 8).toInt(NULL, 2));
+        hexstr += QString::number(binstr.mid(0, 4).toInt(NULL, 2), 16);
+        hexstr += QString::number(binstr.mid(4, 4).toInt(NULL, 2), 16);
         binstr.remove(0, 8);
     }
-
-    qDebug() << bin.size();
-
-    if (bin.contains(QChar(194))) qDebug() << "shit";
+    qDebug() << hexstr;
 
     return bin;
 }
@@ -290,5 +535,13 @@ QString Assembler::fillZeroOrChop(QString str, int len)
         out += str.mid(str.size() - len, len);
     }
     return out;
+}
+
+QString Assembler::imm2bin(QString str, int len)
+{
+    if (str.startsWith("0X"))
+        return fillZeroOrChop(QString::number(str.toInt(NULL, 16), 2), len);
+    else
+        return fillZeroOrChop(QString::number(str.toInt(NULL, 10), 2), len);
 }
 

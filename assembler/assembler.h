@@ -24,8 +24,9 @@ private:
     QMap<QString, int> type4;
     QMap<QString, int> type5;
 
-    QString translate2bin(QString instruction);
+    QString translate2bin(QString instruction, int address);
     QString fillZeroOrChop(QString str, int len);
+    QString imm2bin(QString str, int len);
 };
 
 #endif // ASSEMBLER_H
