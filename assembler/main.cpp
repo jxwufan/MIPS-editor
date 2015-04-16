@@ -4,6 +4,8 @@
 #include "assembler.h"
 #include <QDebug>
 #include <QString>
+#include <QDataStream>
+#include <QByteArray>
 
 int main(int argc, char *argv[])
 {
@@ -22,9 +24,12 @@ int main(int argc, char *argv[])
     QFile file2("output.txt");
     file2.open(QFile::WriteOnly | QFile::Text);
 
-    QTextStream outputtext(&file2);
+    QDataStream outputData(&file2);
 
-    outputtext << output;
+    QByteArray outputByteArray = output.toLatin1();
+
+    outputData.writeRawData(outputByteArray.data(), outputByteArray.size());
+
     file2.close();
 
     return a.exec();

@@ -548,7 +548,7 @@ QString Assembler::translate2bin(QString instruction, int address)
     QString hexstr = "";
 
     while (!binstr.isEmpty()) {
-        bin += QChar(binstr.mid(0, 8).toInt(NULL, 2));
+        bin += char(binstr.mid(0, 8).toInt(NULL, 2));
         hexstr += QString::number(binstr.mid(0, 4).toInt(NULL, 2), 16);
         hexstr += QString::number(binstr.mid(4, 4).toInt(NULL, 2), 16);
         binstr.remove(0, 8);
