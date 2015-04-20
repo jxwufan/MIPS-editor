@@ -362,10 +362,11 @@ QString Assembler::translate2bin(QString instruction, int address)
             //QMessageBox invalid
             return "";
         }
-        binstr += fillZeroOrChop(QString::number(type4[operation], 2), 6);
+        binstr += "00000000000";
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
-        binstr += "0000000000";
+        binstr += imm2bin(operands.at(2), 5);
+        binstr += fillZeroOrChop(QString::number(type4[operation], 2), 6);
         binstr += imm2bin(operands.at(2), 6);
     } else if (type5.contains(operation)) {
         if (operands.size() != 2) {
