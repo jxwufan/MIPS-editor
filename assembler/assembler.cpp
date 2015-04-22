@@ -1,4 +1,5 @@
 #include "assembler.h"
+#include "binarystringtranslator.h"
 
 #include <QList>
 #include <QString>
@@ -147,6 +148,7 @@ Assembler::~Assembler()
 
 QString Assembler::ass2bin(QString input)
 {
+    qlonglong maxAddress = 0;
     input = input.toUpper();
     input = input.replace("\t", " ");
     QStringList inputCodes = input.split(QChar('\n'), QString::SkipEmptyParts);
@@ -173,18 +175,18 @@ QString Assembler::ass2bin(QString input)
     };
 
     Mode mode = Instruction;
-    int address = 0;
+    qlonglong address = 0;
 
     foreach (QString str, inputCodes) {
         str = str.trimmed();
         if (str.startsWith("BASEADDRE")) {
             mode = Instruction;
             bool ok;
-            address = str.split(':').at(1).trimmed().toInt(&ok, 16);
+            address = str.split(':').at(1).trimmed().toLongLong(&ok, 16);
         } else if (str.startsWith("DATAADDRE")) {
             mode = Data;
             bool ok;
-            address = str.split(':').at(1).trimmed().toInt(&ok, 16);
+            address = str.split(':').at(1).trimmed().toLongLong(&ok, 16);
         } else if (str.contains("EQU")) {
             str.replace("EQU", " ");
             QStringList list = str.split(" ", QString::SkipEmptyParts);
@@ -270,9 +272,10 @@ QString Assembler::ass2bin(QString input)
                 }
             }
         }
+        if (address > maxAddress) maxAddress = address;
     }
 
-    for (int address = 0; address < 200; address++)
+    for (int address = 0; address < maxAddress; address++)
     {
         if (ram.contains(address)) {
             QString str = ram[address];
@@ -367,7 +370,6 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += imm2bin(operands.at(2), 5);
         binstr += fillZeroOrChop(QString::number(type4[operation], 2), 6);
-        binstr += imm2bin(operands.at(2), 6);
     } else if (type5.contains(operation)) {
         if (operands.size() != 2) {
             //QMessageBox invalid
@@ -433,28 +435,37 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(0, 2), 5);
         binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
     } else if (operation == "J") {
-        if (operands.size() != 1) {
+        if ((address & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
             //QMessageBox invalid
             return "";
+        } else {
+            if (operands.size() != 1) {
+                //QMessageBox invalid
+                return "";
+            }
+            binstr += fillZeroOrChop(QString::number(2, 2), 6);
+            binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] & 0x0fffffff) / 4, 2), 26);
         }
-        binstr += fillZeroOrChop(QString::number(2, 2), 6);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] - address) / 4, 2), 26);
     } else if (operation == "JAL") {
-        if (operands.size() != 1) {
+        if ((address & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
             //QMessageBox invalid
             return "";
+        } else {
+            if (operands.size() != 1) { //QMessageBox invalid
+                return "";
+            }
+            binstr += fillZeroOrChop(QString::number(3, 2), 6);
+            binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] & 0x0fffffff) / 4, 2), 26);
         }
-        binstr += fillZeroOrChop(QString::number(3, 2), 6);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] - address) / 4, 2), 26);
     } else if (operation == "JALR") {
-        if (operands.size() != 2) {
+        if (operands.size() != 1) {
             //QMessageBox invalid
             return "";
         }
         binstr += "000000";
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += "00000";
-        binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
+        binstr += "11111";
         binstr += "00000";
         binstr += fillZeroOrChop(QString::number(9, 2), 6);
     } else if (operation == "JR") {
@@ -489,18 +500,18 @@ QString Assembler::translate2bin(QString instruction, int address)
             //QMessageBox invalid
             return "";
         }
-        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop("0", 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
-        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop("0", 15);
         binstr += fillZeroOrChop(QString::number(0x11, 2), 6);
     } else if (operation == "MTLO") {
         if (operands.size() != 1) {
             //QMessageBox invalid
             return "";
         }
-        binstr += fillZeroOrChop("0", 16);
+        binstr += fillZeroOrChop("0", 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
-        binstr += fillZeroOrChop("0", 5);
+        binstr += fillZeroOrChop("0", 15);
         binstr += fillZeroOrChop(QString::number(0x13, 2), 6);
     } else if (operation == "ERET") {
         if (operands.size() != 0) {
@@ -543,20 +554,13 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
         binstr += "00000000000";
     }
+
+    BinaryStringTranslator translator;
+
     qDebug() << binstr;
     qDebug() << binstr.size();
 
-    QString hexstr = "";
-
-    while (!binstr.isEmpty()) {
-        bin += char(binstr.mid(0, 8).toInt(NULL, 2));
-        hexstr += QString::number(binstr.mid(0, 4).toInt(NULL, 2), 16);
-        hexstr += QString::number(binstr.mid(4, 4).toInt(NULL, 2), 16);
-        binstr.remove(0, 8);
-    }
-    qDebug() << hexstr;
-
-    return bin;
+    return translator.toBin(binstr);
 }
 
 QString Assembler::fillZeroOrChop(QString str, int len)

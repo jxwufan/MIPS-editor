@@ -30,6 +30,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QString fileName;
+    QString oldFileName;
     bool edited;
 
     void checkEdited();

@@ -15,8 +15,8 @@ public:
     QString ass2bin(QString input);
 
 private:
-    QMap<int, QString> ram;
-    QMap<QString, int> labelTable;
+    QMap<qlonglong, QString> ram;
+    QMap<QString, qlonglong> labelTable;
     QMap<QString, int> registerTable;
     QMap<QString, int> functCode;
     QMap<QString, int> type1;

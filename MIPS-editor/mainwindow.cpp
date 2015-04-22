@@ -55,15 +55,18 @@ void MainWindow::newFile()
 void MainWindow::openFile()
 {
     checkEdited();
-    fileName = QFileDialog::getOpenFileName();
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+    fileName = QFileDialog::getOpenFileName(this, "Open File", ".", "*.coe;;*.mips");
+    if (fileName != "") {
+        oldFileName = fileName;
+        QFile file(fileName);
+        if (!file.open(QFile::ReadOnly | QFile::Text)) {
         QMessageBox::warning(this, "File error", tr("Cannot read file %1:\n%2.").arg(file.fileName()).arg(file.errorString()));
         return;
+        }
+        QTextStream text(&file);
+        ui->plainTextEdit->setPlainText(text.readAll());
+        ui->statusBar->showMessage(fileName);
     }
-    QTextStream text(&file);
-    ui->plainTextEdit->setPlainText(text.readAll());
-    ui->statusBar->showMessage(fileName);
 }
 
 void MainWindow::saveFile()
@@ -74,6 +77,8 @@ void MainWindow::saveFile()
     }
     if (fileName == "*")
         saveAsFile();
+    if (fileName == "")
+        fileName = "*";
     else {
         QFile file(fileName);
         if (!file.open(QFile::WriteOnly | QFile::Text)) {
@@ -89,9 +94,13 @@ void MainWindow::saveFile()
 
 void MainWindow::saveAsFile()
 {
-    fileName = QFileDialog::getSaveFileName();
-    edited = true;
-    saveFile();
+    fileName = QFileDialog::getSaveFileName(this, "Save file", ".", "*.bin;;*.coe;;*.mips");
+    if (fileName != "") {
+        oldFileName = fileName;
+        edited = true;
+        saveFile();
+    } else
+        fileName = oldFileName;
 }
 
 bool MainWindow::exitEditor()

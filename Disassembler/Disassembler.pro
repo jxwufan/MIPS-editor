@@ -15,4 +15,10 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    disassembler.cpp \
+    binarystringtranslator.cpp
+
+HEADERS += \
+    disassembler.h \
+    binarystringtranslator.h
