@@ -205,7 +205,7 @@ QString Assembler::ass2bin(QString input)
             str = "LUI " + operands.at(0).trimmed() + ", " + list.at(1);
             ram[address] = str;
             address += 4;
-            str = "SRL " + operands.at(0) + ", 16";
+            str = "SRL " + operands.at(0) + ", " + operands.at(0) + ", 16";
             ram[address] = str;
             address += 4;
             str = "LUI " + operands.at(0).trimmed() + ", " + list.at(0);
@@ -219,7 +219,7 @@ QString Assembler::ass2bin(QString input)
             str = "LUI " + operands.at(0).trimmed() + ", " + list.at(1);
             ram[address] = str;
             address += 4;
-            str = "SRL " + operands.at(0) + ", 16";
+            str = "SRL " + operands.at(0) + ", " + operands.at(0) + ", 16";
             ram[address] = str;
             address += 4;
             str = "LUI " + operands.at(0).trimmed() + ", " + list.at(0);

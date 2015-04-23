@@ -187,6 +187,7 @@ bool MainWindow::exitEditor()
 void MainWindow::textChanged()
 {
     edited = true;
+    ui->statusBar->showMessage(fileName, 0);
 }
 
 void MainWindow::checkEdited()
