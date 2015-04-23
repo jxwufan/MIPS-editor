@@ -1,5 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "assembler.h"
+#include "binarystringtranslator.h"
+#include "coetranslator.h"
+#include "disassembler.h"
+
 #include <QDebug>
 #include <QKeySequence>
 #include <QMessageBox>
@@ -55,17 +60,33 @@ void MainWindow::newFile()
 void MainWindow::openFile()
 {
     checkEdited();
-    fileName = QFileDialog::getOpenFileName(this, "Open File", ".", "*.coe;;*.mips");
-    if (fileName != "") {
-        oldFileName = fileName;
-        QFile file(fileName);
+    QString newFileName = QFileDialog::getOpenFileName(this, "Open File", ".", "*.coe;;*.mips;;*.bin");
+    if (newFileName != "") {
+        QFile file(newFileName);
         if (!file.open(QFile::ReadOnly | QFile::Text)) {
         QMessageBox::warning(this, "File error", tr("Cannot read file %1:\n%2.").arg(file.fileName()).arg(file.errorString()));
         return;
         }
-        QTextStream text(&file);
-        ui->plainTextEdit->setPlainText(text.readAll());
-        ui->statusBar->showMessage(fileName);
+        if (newFileName.endsWith("mips") || newFileName.endsWith("coe")) {
+            QTextStream text(&file);
+            ui->plainTextEdit->setPlainText(text.readAll());
+            fileName = newFileName;
+            ui->statusBar->showMessage(fileName);
+        } else {
+            BinaryStringTranslator translator;
+            QString binstr = translator.toBinstr(file.readAll());
+            if (QMessageBox::warning(this, "Translate File", "Do you want to translate it as mips file to edit? Click no to translate it as coe file.", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                Disassembler dis;
+                ui->plainTextEdit->setPlainText(dis.bin2ass(binstr));
+                fileName = "*";
+                ui->statusBar->showMessage(fileName);
+            } else {
+                COETranslator trans;
+                ui->plainTextEdit->setPlainText(trans.bin2coe(binstr));
+                fileName = "*";
+                ui->statusBar->showMessage(fileName);
+            }
+        }
     }
 }
 
@@ -77,30 +98,74 @@ void MainWindow::saveFile()
     }
     if (fileName == "*")
         saveAsFile();
-    if (fileName == "")
-        fileName = "*";
-    else {
-        QFile file(fileName);
-        if (!file.open(QFile::WriteOnly | QFile::Text)) {
-            QMessageBox::warning(this, "File error", tr("Cannot write file %1:\n%2.").arg(file.fileName()).arg(file.errorString()));
-            return;
-        }
-        QTextStream text(&file);
-        text << ui->plainTextEdit->toPlainText();
-        edited = false;
-        ui->statusBar->showMessage(fileName);
+    QFile file(fileName);
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        QMessageBox::warning(this, "File error", tr("Cannot write file %1:\n%2.").arg(file.fileName()).arg(file.errorString()));
+        return;
     }
+    QTextStream text(&file);
+    text << ui->plainTextEdit->toPlainText();
+    edited = false;
+    ui->statusBar->showMessage(fileName);
 }
 
 void MainWindow::saveAsFile()
 {
-    fileName = QFileDialog::getSaveFileName(this, "Save file", ".", "*.bin;;*.coe;;*.mips");
-    if (fileName != "") {
-        oldFileName = fileName;
-        edited = true;
-        saveFile();
-    } else
-        fileName = oldFileName;
+    QString newFileName;
+    newFileName = QFileDialog::getSaveFileName(this, "Save file", ".", "*.bin;;*.coe;;*.mips");
+    COETranslator coetranslator;
+    BinaryStringTranslator bintranslator;
+    Assembler assembler;
+    Disassembler disassembler;
+    if (newFileName != "") {
+        QFile file(newFileName);
+        if (!file.open(QFile::WriteOnly)) {
+            QMessageBox::warning(this, "File error", tr("Cannot write file %1:\n%2.").arg(file.fileName()).arg(file.errorString()));
+            return;
+        } else if (fileName == "*") {
+            if (newFileName.endsWith("bin")) {
+                QString bin;
+                if (QMessageBox::warning(this, "Which type?", "Is the raw text is MIPS assembly language? Click no if it is coe file.", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes){
+                    bin = assembler.ass2bin(ui->plainTextEdit->toPlainText());
+                } else {
+                    bin = bintranslator.toBin(coetranslator.coe2bin(ui->plainTextEdit->toPlainText()));
+                }
+                QDataStream data(&file);
+                data.writeRawData(bin.toLatin1().data(), bin.toLatin1().size());
+            } else {
+                QTextStream text(&file);
+                text << ui->plainTextEdit->toPlainText();
+                fileName = newFileName;
+                ui->statusBar->showMessage(fileName);
+                edited = false;
+            }
+        } else {
+            if (newFileName == fileName) {
+                saveFile();
+            } else {
+                if (newFileName.endsWith("bin")) {
+                    QString bin;
+                    if ( fileName.endsWith("mips") ) {
+                        bin = assembler.ass2bin(ui->plainTextEdit->toPlainText());
+                    } else {
+                        bin = bintranslator.toBin(coetranslator.coe2bin(ui->plainTextEdit->toPlainText()));
+                    }
+                    QDataStream data(&file);
+                    data.writeRawData(bin.toLatin1().data(), bin.toLatin1().size());
+                } else if (fileName.endsWith("mips") && newFileName.endsWith("coe")) {
+                    QTextStream text(&file);
+                    text << coetranslator.bin2coe(bintranslator.toBinstr(assembler.ass2bin(ui->plainTextEdit->toPlainText()).toLatin1()));
+                } else if (fileName.endsWith("coe") && newFileName.endsWith("mips")) {
+                    QTextStream text(&file);
+                    text << disassembler.bin2ass(coetranslator.coe2bin(ui->plainTextEdit->toPlainText()));
+                    qDebug() << disassembler.bin2ass(coetranslator.coe2bin(ui->plainTextEdit->toPlainText()));
+                } else {
+                    QTextStream text(&file);
+                    text << ui->plainTextEdit->toPlainText();
+                }
+            }
+        }
+    }
 }
 
 bool MainWindow::exitEditor()

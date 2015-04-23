@@ -13,8 +13,16 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    assembler.cpp \
+    binarystringtranslator.cpp \
+    coetranslator.cpp \
+    disassembler.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    assembler.h \
+    binarystringtranslator.h \
+    coetranslator.h \
+    disassembler.h
 
 FORMS    += mainwindow.ui
