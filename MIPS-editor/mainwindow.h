@@ -27,6 +27,9 @@ private slots:
 
     void textChanged();
 
+    void toCOE();
+    void toMIPS();
+
 private:
     Ui::MainWindow *ui;
     QString fileName;

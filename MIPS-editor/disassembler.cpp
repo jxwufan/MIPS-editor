@@ -200,34 +200,34 @@ QString Disassembler::bin2ass(QString input)
             output += "bne ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
             output += registerTable[instruction.mid(6 + 5, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000100") {
             output += "beq ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
             output += registerTable[instruction.mid(6 + 5, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000001" && instruction.mid(11, 5) == "00001") {
             output += "bgez ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000111" && instruction.mid(11, 5) == "00000") {
             output += "bgtz ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000001" && instruction.mid(11, 5) == "00000") {
             output += "bltz ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000110" && instruction.mid(11, 5) == "00000") {
             output += "blez ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)] + ", ";
-            output += "0x" + QString::number(address + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
+            output += "0x" + QString::number(address + 4 + 4 * (instruction.mid(32 - 15, 15).toInt(NULL, 2) - sign * (1 << 15)), 16);
         } else if (opcode == "000010") {
             output += "j ";
-            output += "0x" + QString::number(qlonglong(address & 0xf0000000) + instruction.mid(6, 26).toLongLong(NULL, 2) * 4, 16);
+            output += "0x" + QString::number(qlonglong((address + 4) & 0xf0000000) + instruction.mid(6, 26).toLongLong(NULL, 2) * 4, 16);
         } else if (opcode == "000011") {
             output += "jal ";
-            output += "0x" + QString::number(qlonglong(address & 0xf0000000) + instruction.mid(6, 26).toLongLong(NULL, 2) * 4, 16);
+            output += "0x" + QString::number(qlonglong((address + 4) & 0xf0000000) + instruction.mid(6, 26).toLongLong(NULL, 2) * 4, 16);
         } else if (opcode == "000000" && instruction.mid(32 - 6, 6) == "001000" && instruction.mid(6 + 5, 15) == "000000000000000") {
             output += "jr ";
             output += registerTable[instruction.mid(6, 5).toInt(NULL, 2)];

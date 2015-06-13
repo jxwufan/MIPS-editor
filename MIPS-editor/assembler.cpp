@@ -399,7 +399,7 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(5, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "BEQ") {
         if (operands.size() != 3) {
             //QMessageBox invalid
@@ -409,7 +409,7 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(4, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(1)], 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(2)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "BGEZ") {
         if (operands.size() != 2) {
             //QMessageBox invalid
@@ -419,7 +419,7 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(1, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(1, 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "BGTZ") {
         if (operands.size() != 2) {
             //QMessageBox invalid
@@ -429,7 +429,7 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(7, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(0, 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "BLTZ") {
         if (operands.size() != 2) {
             //QMessageBox invalid
@@ -439,7 +439,7 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(1, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(0, 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "BLEZ") {
         if (operands.size() != 2) {
             //QMessageBox invalid
@@ -449,9 +449,9 @@ QString Assembler::translate2bin(QString instruction, int address)
         binstr += fillZeroOrChop(QString::number(6, 2), 6);
         binstr += fillZeroOrChop(QString::number(registerTable[operands.at(0)], 2), 5);
         binstr += fillZeroOrChop(QString::number(0, 2), 5);
-        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - address) / 4, 2), 16);
+        binstr += fillZeroOrChop(QString::number((labelTable[operands.at(1)] - (address + 4)) / 4, 2), 16);
     } else if (operation == "J") {
-        if ((address & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
+        if (((address + 4) & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
             //QMessageBox invalid
             QMessageBox::critical(NULL, "Invalid", "Invalid instruction!", QMessageBox::Ok);
             return "";
@@ -465,7 +465,7 @@ QString Assembler::translate2bin(QString instruction, int address)
             binstr += fillZeroOrChop(QString::number((labelTable[operands.at(0)] & 0x0fffffff) / 4, 2), 26);
         }
     } else if (operation == "JAL") {
-        if ((address & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
+        if (((address + 4) & 0xf0000000) != (labelTable[operands.at(0)] & 0xf0000000)) {
             //QMessageBox invalid
             QMessageBox::critical(NULL, "Invalid", "Invalid instruction!", QMessageBox::Ok);
             return "";

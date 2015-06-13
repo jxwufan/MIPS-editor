@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveFile);
     connect(ui->actionSave_as, &QAction::triggered, this, &MainWindow::saveAsFile);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::exitEditor);
+    connect(ui->toCOEButton, &QPushButton::clicked, this, &MainWindow::toCOE);
+    connect(ui->toMIPSButton, &QPushButton::clicked, this, &MainWindow::toMIPS);
 
     ui->actionNew->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
     ui->actionOpen->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_O));
@@ -195,3 +197,22 @@ void MainWindow::checkEdited()
     if (edited && (QMessageBox::warning(this, "Warning", "Do you want to save the edited file first?", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes))
         saveFile();
 }
+
+void MainWindow::toCOE()
+{
+    Assembler assembler;
+    Disassembler disassembler;
+    COETranslator coetranslator;
+    BinaryStringTranslator bintranslator;
+    ui->outputEdit->setPlainText(coetranslator.bin2coe(bintranslator.toBinstr(assembler.ass2bin(ui->plainTextEdit->toPlainText()).toLatin1())));
+}
+
+void MainWindow::toMIPS()
+{
+    Assembler assembler;
+    Disassembler disassembler;
+    COETranslator coetranslator;
+    BinaryStringTranslator bintranslator;
+    ui->outputEdit->setPlainText(disassembler.bin2ass(coetranslator.coe2bin(ui->plainTextEdit->toPlainText())));
+}
+
